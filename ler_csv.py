@@ -1,9 +1,11 @@
 from pathlib import Path
+from typing import List
 import csv
+
+from entidades import RegistroMatricula, normalizar_texto
 
 
 def converter_inteiro(valor: str | int | None) -> int:
-    # Converte um valor textual do CSV para inteiro, tratando casos de valores ausentes ou inválidos.
     if valor is None:
         return 0
     texto = str(valor).strip()
@@ -15,33 +17,50 @@ def converter_inteiro(valor: str | int | None) -> int:
         return 0
 
 
-def ler_csv_bruto(caminho_csv: Path) -> list[dict]:
-    """Lê um arquivo CSV anual testando encodings comuns e retorna lista de dicionários."""
+def ler_arquivo_csv(caminho_csv: Path) -> List[RegistroMatricula]:
+    #Converte cada linha válida de um arquivo CSV em um objeto RegistroMatricula
     encodings = ["utf-8-sig", "utf-8", "latin-1", "cp1252"]
-    linhas = None
+    conteudo_linhas = None
 
-    for encoding in encodings:
+    for enc in encodings:
         try:
-            with open(caminho_csv, mode="r", encoding=encoding, newline="") as f:
-                linhas = list(csv.DictReader(f))
+            with open(caminho_csv, mode="r", encoding=enc, newline="") as f:
+                conteudo_linhas = list(csv.DictReader(f))
                 break
         except UnicodeDecodeError:
             continue
 
-    if linhas is None:
+    if conteudo_linhas is None:
         raise RuntimeError(f"Não foi possível decodificar o arquivo CSV: {caminho_csv}")
 
-    registros = []
-    for linha in linhas:
+    registros: List[RegistroMatricula] = []
+    for linha in conteudo_linhas:
         if not linha:
             continue
-        registros.append({
-            "ano": converter_inteiro(linha.get("AnoReferencia")),
-            "municipio": str(linha.get("NomeMunicipio", "")).strip(),
-            "escola": str(linha.get("NomeUnidadeEscolar", "")).strip(),
-            "matriculas_total": converter_inteiro(linha.get("MatriculasTotal")),
-            "aprovados": converter_inteiro(linha.get("Aprovados")),
-            "reprovados": converter_inteiro(linha.get("Reprovados")),
-            "abandono": converter_inteiro(linha.get("Abandono")),
-        })
+        nome_mun = normalizar_texto(linha.get("NomeMunicipio", ""))
+        nome_esc = normalizar_texto(linha.get("NomeUnidadeEscolar", ""))
+        ano = converter_inteiro(linha.get("AnoReferencia"))
+
+        if not nome_mun or not nome_esc or ano <= 0:
+            continue
+
+        registros.append(
+            RegistroMatricula(
+                id_csv=converter_inteiro(linha.get("_id")),
+                ano_referencia=ano,
+                nome_municipio=nome_mun,
+                nome_unidade_escolar=nome_esc,
+                matriculas_total=converter_inteiro(linha.get("MatriculasTotal")),
+                matricula_inicial=converter_inteiro(linha.get("MatriculaInicial")),
+                matricula_apos_censo=converter_inteiro(linha.get("MatriculaAposCenso")),
+                transferidos=converter_inteiro(linha.get("Transferidos")),
+                cancelados=converter_inteiro(linha.get("Cancelados")),
+                falecido=converter_inteiro(linha.get("Falecido")),
+                abandono=converter_inteiro(linha.get("Abandono")),
+                aprovados=converter_inteiro(linha.get("Aprovados")),
+                reprovados=converter_inteiro(linha.get("Reprovados")),
+                cursando=converter_inteiro(linha.get("Cursando")),
+                outras_situacoes=converter_inteiro(linha.get("OutrasSituacoes")),
+            )
+        )
     return registros
