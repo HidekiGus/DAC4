@@ -1,22 +1,20 @@
-from pathlib import Path
-from ler_csv import ler_arquivo_csv
+from ler_csv import carregar_em_memoria
 
 
 def main() -> None:
-    caminho = Path("data/matriculas-por-unidade-escolar-2018.csv")
-    registros = ler_arquivo_csv(caminho)
+    estrutura = carregar_em_memoria()
+    resumo = estrutura.resumo_estatistico()
 
-    primeiro = registros[0]
-    print(f"Escola: {primeiro.nome_unidade_escolar} ({primeiro.nome_municipio})")
-    print(f"Matrículas: {primeiro.matriculas_total}")
-    print(f"Taxa de Aprovação (Concluintes): {primeiro.taxa_aprovacao_concluintes}%")
-    print(f"Taxa de Abandono (Total): {primeiro.taxa_abandono_total}%")
+    print("=== RESUMO DA ESTRUTURA EM MEMÓRIA ===")
+    print(f"Anos carregados: {resumo['anos']}")
+    print(f"Municípios únicos (MS): {resumo['total_municipios']}")
+    print(f"Unidades escolares únicas: {resumo['total_escolas']}")
+    print(f"Total de registros: {resumo['total_registros']}")
 
-    """for registro in registros:
-        print(f"Escola: {registro.nome_unidade_escolar} ({registro.nome_municipio})")
-        print(f"Matrículas: {registro.matriculas_total}")
-        print(f"Taxa de Aprovação (Concluintes): {registro.taxa_aprovacao_concluintes}%")
-        print(f"Taxa de Abandono (Total): {registro.taxa_abandono_total}%")"""
+    print("\nTop 5 Escolas com Maior Abandono em 2023:")
+    for r in estrutura.top_escolas_maior_abandono(n=5, ano=2023):
+        print(f" - {r.nome_unidade_escolar} ({r.nome_municipio}): {r.taxa_abandono_total}%")
+
 
 if __name__ == "__main__":
     main()

@@ -1,8 +1,12 @@
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 import csv
 
-from entidades import RegistroMatricula, normalizar_texto
+from entidades import EstruturaDadosEducacional, RegistroMatricula, normalizar_texto
+
+DIRETORIOS_CSV_PADRAO = [
+    Path(__file__).resolve().parent.parent / "data" / "csv_matriculas",
+]
 
 
 def converter_inteiro(valor: str | int | None) -> int:
@@ -17,8 +21,21 @@ def converter_inteiro(valor: str | int | None) -> int:
         return 0
 
 
+def localizar_arquivos_csv(diretorio_customizado: Optional[str | Path] = None) -> List[Path]:
+    candidatos: List[Path] = []
+    if diretorio_customizado:
+        candidatos.append(Path(diretorio_customizado))
+    candidatos.extend(DIRETORIOS_CSV_PADRAO)
+
+    for pasta in candidatos:
+        if pasta.exists() and pasta.is_dir():
+            arquivos = sorted(pasta.glob("matriculas-por-unidade-escolar-*.csv"))
+            if arquivos:
+                return arquivos
+    return []
+
+
 def ler_arquivo_csv(caminho_csv: Path) -> List[RegistroMatricula]:
-    #Converte cada linha válida de um arquivo CSV em um objeto RegistroMatricula
     encodings = ["utf-8-sig", "utf-8", "latin-1", "cp1252"]
     conteudo_linhas = None
 
@@ -64,3 +81,12 @@ def ler_arquivo_csv(caminho_csv: Path) -> List[RegistroMatricula]:
             )
         )
     return registros
+
+
+def carregar_em_memoria(diretorio_csv: Optional[str | Path] = None) -> EstruturaDadosEducacional:
+    arquivos = localizar_arquivos_csv(diretorio_csv)
+    estrutura = EstruturaDadosEducacional()
+    for arq in arquivos:
+        for reg in ler_arquivo_csv(arq):
+            estrutura.inserir_registro(reg)
+    return estrutura
