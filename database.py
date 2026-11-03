@@ -78,8 +78,7 @@ class DatabaseManager:
     """Gerenciador de persistência relacional SQLite para a série histórica escolar de MS."""
     def __init__(self, db_path: str | Path) -> None:
         self.db_path = Path(db_path)
-        self.db_path.parent.mkdir
-        (parents=True, exist_ok=True)
+        self.db_path.parent.mkdir (parents=True, exist_ok=True)
     def conectar(self) -> sqlite3.Connection:
         conn = sqlite3.connect(str(self.db_path))
         conn.row_factory = sqlite3.Row
