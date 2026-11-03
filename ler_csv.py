@@ -10,6 +10,7 @@ DIRETORIOS_CSV_PADRAO = [
 
 
 def converter_inteiro(valor: str | int | None) -> int:
+    # Converte um valor textual do CSV para inteiro, tratando casos de valores ausentes ou inválidos.
     if valor is None:
         return 0
     texto = str(valor).strip()
